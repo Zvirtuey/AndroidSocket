@@ -1,4 +1,4 @@
-package com.virtue.androidsocket;
+package com.virtue.socketdemo;
 
 import org.junit.Test;
 
