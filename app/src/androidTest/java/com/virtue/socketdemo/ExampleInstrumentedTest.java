@@ -1,4 +1,4 @@
-package com.virtue.androidsocket;
+package com.virtue.socketdemo;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
