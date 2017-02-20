@@ -23,7 +23,7 @@ public class MySocketService extends Service {
 
     @Override
     public void onCreate() {
-        socketer = new Socketer(getApplicationContext());
+        socketer = Socketer.getInstance(getApplicationContext());
         socketer.setSocketInfo("192.168.2.152", 20000, 15 * 1000);
         socketer.setSocketEnCode("UTF-8");
         socketer.setReciveMsgSlitChar("8002");

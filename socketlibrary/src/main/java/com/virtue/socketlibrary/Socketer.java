@@ -12,14 +12,25 @@ import java.io.IOException;
 
 public class Socketer {
 
-    private FastSocket fastSocket = null;
-    private Context mContext;
+    private static FastSocket fastSocket = null;
+    private static Context mContext;
 
-    public Socketer(Context context) {
+    private Socketer() {
+        // 私有的构造函数
+    }
+
+    public static final Socketer getInstance(Context context) {
         fastSocket = FastSocket.getInstance();
         fastSocket.setContext(context);
-        this.mContext = context;
+        mContext = context;
+        return SingleHolder.INSTANCE;
     }
+
+    // 定义的静态内部类
+    private static class SingleHolder {
+        private static final Socketer INSTANCE = new Socketer(); // 创建实例的地方
+    }
+
 
     /**
      * 设置服务器ip
