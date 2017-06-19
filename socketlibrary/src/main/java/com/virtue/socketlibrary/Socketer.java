@@ -1,162 +1,491 @@
 package com.virtue.socketlibrary;
 
 import android.content.Context;
-import android.text.TextUtils;
-import android.widget.Toast;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.util.Log;
 
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import static com.virtue.socketlibrary.ReceiveType.SEPARATION_SIGN;
 
 /**
  * Created by virtue on 2017/2/15.
  */
 
-public class Socketer {
+public class Socketer extends Thread {
 
-    private static FastSocket fastSocket = null;
     private static Context mContext;
+    public Socket socket;
+    private BufferedWriter outputStream;
+    private DataInputStream inputStream;
+    private static final String TAG = "Socketer";
+    private String ip = "192.168.1.108"; //服务器地址
+    private int port = 80; //服务器端口
+    private int timeout = 15; //请求超时时长 单位秒（Unit sec）
+    private int sendMaxByteLength = 1500; //发送字节数限制 单位字节（Unit byte）
+    private boolean isRuning = true; //是否接受服务器数据
+    public boolean isConnected = true; // 是否连接服务器
+    private String encode = "UTF-8"; //编码
+    private String endCharSequence = "\r\n"; //分割结束标识符
+    private String endData = ""; //尾部剩余数据
+    private int msgLength = 0; //固定长度分割
+    private ReceiveType receiveType = SEPARATION_SIGN; //接收形式
+    private SendMsgThread sendMsgThread;
+    private ReceiveMsgThread receiveMsgThread;
+    private ConcurrentHashMap<String, ResponseListener> mDataMap;
+    private ConcurrentHashMap<String, Long> mTimeOutMap;
+    private List<String> reqIdList;
 
     private Socketer() {
-        // 私有的构造函数
+        sendMsgThread = new SendMsgThread();
+        receiveMsgThread = new ReceiveMsgThread();
+        mDataMap = new ConcurrentHashMap();
+        mTimeOutMap = new ConcurrentHashMap();
+        reqIdList = Collections.synchronizedList(new ArrayList<String>());
     }
 
     public static final Socketer getInstance(Context context) {
-        fastSocket = FastSocket.getInstance();
-        fastSocket.setContext(context);
         mContext = context;
         return SingleHolder.INSTANCE;
     }
 
-    // 定义的静态内部类
     private static class SingleHolder {
         private static final Socketer INSTANCE = new Socketer(); // 创建实例的地方
     }
 
-
-    /**
-     * 设置服务器ip
-     *
-     * @param ip
-     */
-    public void setSocketIP(String ip) {
-        fastSocket.setIp(ip);
+    public Socketer bindServerContect(String address, int port) {
+        this.ip = address;
+        this.port = port;
+        return this;
     }
 
-    /**
-     * 设置服务器的端口
-     *
-     * @param port
-     */
-    public void setSocketPort(int port) {
-        fastSocket.setPort(port);
+    public void onStart() {
+        this.start();
     }
 
-    /**
-     * 设置服务器的ip，端口，连接超时时间
-     *
-     * @param ip
-     * @param port
-     * @param timeOut
-     */
-    public void setSocketInfo(String ip, int port, int timeOut) {
-        fastSocket.setIp(ip);
-        fastSocket.setPort(port);
-        fastSocket.setTimeout(timeOut);
+    public int getTimeout() {
+        return timeout;
     }
 
-    /**
-     * 设置通讯的编码（针对与byte与String之间转换）
-     *
-     * @param enCode
-     */
-    public void setSocketEnCode(String enCode) {
-        fastSocket.setEncode(enCode);
+    public Socketer setTimeout(int timeout) {
+        this.timeout = timeout;
+        return this;
     }
 
-    /**
-     * 设置分割接收信息的结束标记符
-     *
-     * @param slit
-     */
-    public void setReciveMsgSlitChar(String slit) {
-        fastSocket.setReceiveType(0);
-        fastSocket.setEndCharSequence(slit);
+    public int getSendMaxByteLength() {
+        return sendMaxByteLength;
     }
 
-    /**
-     * 设置分割接收消息的固定长度
-     *
-     * @param length
-     */
-    public void setReciveMsgSlitLength(int length) {
-        fastSocket.setReceiveType(1);
-        fastSocket.setMsgLength(length);
+    public Socketer setSendMaxByteLength(int sendMaxByteLength) {
+        this.sendMaxByteLength = sendMaxByteLength;
+        return this;
     }
 
-    /**
-     * 发送byte数据
-     *
-     * @param bytes
-     * @return
-     */
-    public int sendData(byte[] bytes) {
-        return fastSocket.sendByteData(bytes);
+    public String getEncode() {
+        return encode;
+    }
+
+    public Socketer setEncode(String encode) {
+        this.encode = encode;
+        return this;
+    }
+
+    public ReceiveType getReceiveType() {
+        return receiveType;
+    }
+
+    public Socketer setReceiveType(ReceiveType receiveType) {
+        this.receiveType = receiveType;
+        return this;
+    }
+
+    public int getMsgLength() {
+        return msgLength;
+    }
+
+    public Socketer setMsgLength(int msgLength) {
+        this.msgLength = msgLength;
+        return this;
+    }
+
+    public String getEndCharSequence() {
+        return endCharSequence;
+    }
+
+    public Socketer setEndCharSequence(String endCharSequence) {
+        this.endCharSequence = endCharSequence;
+        return this;
+    }
+
+    @Override
+    public void run() {
+        while (isRuning) {
+            while (socket == null || !socket.isConnected() || isServerClose(socket)) {
+                try {
+                    connectSocket();
+                    Log.i(TAG, "连接服务器");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Log.e(TAG, "run连接服务器失败,请检测网络和服务器");
+                    if (isConnected == true) {
+                        isConnected = false;
+                        SendBroadCastUtil.sendNetworkStateBroadcast(mContext, isConnected);
+                    }
+                    closeConnect();
+                    try {
+                        sleep(3000);
+                    } catch (InterruptedException e1) {
+                        e1.printStackTrace();
+                    }
+                }
+            }
+            try {
+                if (socket.isConnected() && inputStream != null) {
+                    if (isConnected == false) {
+                        isConnected = true;
+                        SendBroadCastUtil.sendNetworkStateBroadcast(mContext, isConnected);
+                    }
+                    Log.i(TAG, "连接服务器等待接受消息,缓冲区=" + socket.getReceiveBufferSize());
+                    try {
+                        int len = 0;
+                        byte[] temp;
+                        if (msgLength > 0) {
+                            temp = new byte[msgLength];
+                        } else {
+                            temp = new byte[2048];
+                        }
+                        while ((len = inputStream.read(temp == null ? temp = new byte[2048] : temp)) != -1) {
+
+                            switch (receiveType) {
+                                case SEPARATION_SIGN: // 按包尾字符分割信息
+                                    String tempData = new String(temp, 0, len);
+                                    StringBuilder builder = new StringBuilder();
+                                    builder.append(endData);
+                                    builder.append(tempData);
+                                    String totalStr = builder.toString();
+                                    while (totalStr.contains(endCharSequence)) {
+                                        String[] splitArray = totalStr.split(endCharSequence, 2);
+                                        String mData = splitArray[0];
+                                        endData = splitArray[1];
+                                        totalStr = endData;
+                                        executeReceiveTask(mData);
+//                                        temp = null;
+//                                        buffer = null;
+                                    }
+
+                                    break;
+
+                                case FIXED_LENGTH: // 按固定长度分割信息
+                                    if (msgLength > 0) {
+                                        String allData = new String(temp, 0, len);
+                                        executeReceiveTask(allData);
+                                    } else {
+                                        Log.e(TAG, "请设置接收固定大小的字节数");
+                                    }
+
+                                    break;
+
+                                default:
+                                    break;
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Log.i(TAG, "没有可接收的数据");
+                    }
+                } else {
+                    inputStream = new DataInputStream(socket.getInputStream());
+                    Log.i(TAG, "服务未连接，重连中...");
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "服务器连接失败！");
+                e.printStackTrace();
+                if (socket != null) {
+                    try {
+                        socket.close();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                    socket = null;
+                }
+                isConnected = false;
+                // 没有可接收的数据
+            }
+        }
+
     }
 
     /**
      * 发送String数据
      *
-     * @param data
-     * @return
+     * @param requestData      请求数据
+     * @param confirmId        服务器返回的唯一标识
+     * @param responseListener 监听器
      */
-    public int sendData(String data) {
-        return fastSocket.sendByteData(data);
+    public void sendStrData(String requestData, String confirmId, ResponseListener responseListener) {
+        if (isConnected) {
+            boolean sendCode = executeSendTask(requestData, confirmId, responseListener);
+            if (!sendCode) {
+                responseListener.onFail(SocketCode.SEND_FAIL);
+            }
+        } else {
+            responseListener.onFail(SocketCode.DISCONNECT);
+        }
+
+    }
+
+    public void connectSocket() throws IOException {
+        endData = "";
+        socket = new Socket(ip, port);
+        socket.setSoTimeout(15 * 1000);
+        socket.setTcpNoDelay(true); // 关闭 Nagle 算法
+        socket.setReceiveBufferSize(1024 * 10000);
+        outputStream = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encode));
+        inputStream = new DataInputStream(socket.getInputStream());
+        isRuning = true;
     }
 
     /**
-     * 开启socket服务
+     * 关闭连接 close socket
      */
-    public void startSocket() {
-        if (checkSocketInfo()) {
-            fastSocket.start();
+    public void closeConnect() {
+        try {
+            if (socket != null) {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+                socket.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();// 关闭连接失败 close fail
         }
     }
 
-    /**
-     * 停止socket服务
-     */
-    public void stopSocket() {
-        fastSocket.closeConnect();
+    public Boolean isServerClose(Socket socket) {
+        try {
+            socket.sendUrgentData(0xFF);// 发送1个字节的紧急数据，默认情况下，服务器端没有开启紧急数据处理，不影响正常通信
+            return false;
+        } catch (Exception se) {
+            return true;
+        }
     }
 
-    /**
-     * 重新连接socket服务
-     */
-    public void reConnectSocket() {
-        if (checkSocketInfo()) {
-            try {
-                fastSocket.connectSocket();
-                fastSocket.setRuning(true);
-                fastSocket.run();
-            } catch (IOException e) {
-                e.printStackTrace();
+    public boolean executeSendTask(String data, String requestId, ResponseListener mListener) {
+        if (sendMsgThread == null || !sendMsgThread.isAlive()) {
+            sendMsgThread = new SendMsgThread();
+            synchronized (sendMsgThread) {
+                sendMsgThread.start();
+                try {
+                    sendMsgThread.wait();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         }
+        if (sendMsgThread.mLooper == null || sendMsgThread.mHandler == null) {
+            Log.e(TAG, "workerThread mLooper mHandler ERROR！");
+            return false;
+        }
+        Message msg = Message.obtain();
+        Bundle bundle = new Bundle();
+        bundle.putString("content", data);
+        bundle.putString("msgId", requestId);
+        msg.setData(bundle);
+        msg.obj = mListener;
+        return sendMsgThread.mHandler.sendMessage(msg);
     }
 
-    /**
-     * 校验socket服务设置
-     */
-    private boolean checkSocketInfo() {
-        String ip = fastSocket.getIp();
-        int port = fastSocket.getPort();
-        if (ip == null || TextUtils.equals(ip, "")) {
-            Toast.makeText(mContext, "请设置服务器ip", Toast.LENGTH_SHORT).show();
+    public boolean executeReceiveTask(String data) {
+        if (receiveMsgThread == null || !receiveMsgThread.isAlive()) {
+            receiveMsgThread = new ReceiveMsgThread();
+            synchronized (receiveMsgThread) {
+                receiveMsgThread.start();
+                try {
+                    receiveMsgThread.wait();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        if (receiveMsgThread.mReceiveLooper == null || receiveMsgThread.mHandler == null) {
+            Log.e(TAG, "receiveMsgThread mLooper mHandler ERROR！");
             return false;
         }
-        if (port == 0) {
-            Toast.makeText(mContext, "请设置服务器端口", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-        return true;
+        Message msg = Message.obtain();
+        msg.obj = data;
+        return receiveMsgThread.mHandler.sendMessage(msg);
     }
+
+    public class SendMsgThread extends Thread {
+        protected final String TAG = "SendMsgThread";
+        private Handler mHandler;
+        private Looper mLooper;
+
+        public void run() {
+            Looper.prepare();
+            mLooper = Looper.myLooper();
+            mHandler = new Handler(mLooper) {
+                public void handleMessage(Message msg) {
+                    int sendCode = SocketCode.DISCONNECT;
+                    Bundle mArgs = msg.getData();
+                    String mData = mArgs.getString("content");
+                    String mReqId = mArgs.getString("msgId");
+                    ResponseListener responseListener = (ResponseListener) msg.obj;
+                    if (socket == null || !socket.isConnected()) {
+                        try {
+                            connectSocket();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            sendCode = SocketCode.DISCONNECT;// 连接服务器失败
+                            responseListener.onFail(sendCode);
+                            Log.e(TAG, "连接服务器失败,请检测网络" + e);
+                            return;
+                        }
+                    }
+                    if (outputStream == null) {
+                        try {
+                            outputStream = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encode));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            sendCode = SocketCode.SEND_FAIL;// 获取输出流失败
+                            responseListener.onFail(sendCode);
+                            Log.e(TAG, "发送获取流失败" + e);
+                            return;
+                        }
+                    }
+                    Log.i(TAG, "请求的数据长度：" + mData.length() + "\n请求数据：" + mData);
+                    if (mData.getBytes().length > sendMaxByteLength) {
+                        responseListener.onFail(SocketCode.SEND_TO_LONG);
+                        return;
+                    }
+                    try {
+                        mDataMap.put(mReqId, responseListener);
+                        reqIdList.add(mReqId);
+                        long sendTime = System.currentTimeMillis();
+                        mTimeOutMap.put(mReqId, sendTime);
+                        outputStream.write(mData);
+                        outputStream.flush();
+                        Log.i(TAG, "消息已发送");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        sendCode = SocketCode.SEND_FAIL; // 发送请求失败
+                        responseListener.onFail(sendCode);
+                        Log.e(TAG, "发送请求失败" + e);
+                        try {
+                            socket.close();
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                            Log.e(TAG, "关流失败" + e1);
+                        }
+                        socket = null;
+                        return;
+                    }
+                    scheduledExecutorService.scheduleWithFixedDelay(runnable, timeout, 1, TimeUnit.SECONDS);
+                }
+            };
+            synchronized (this) {
+                try {
+                    notify();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            Looper.loop();
+        }
+    }
+
+    public class ReceiveMsgThread extends Thread {
+        protected final String TAG = "ReceiveMsgThread";
+        private Handler mHandler;
+        private Looper mReceiveLooper;
+
+        public void run() {
+            Looper.prepare();
+            mReceiveLooper = Looper.myLooper();
+            mHandler = new Handler(mReceiveLooper) {
+                public void handleMessage(Message msg) {
+                    String mData = (String) msg.obj;
+                    Log.w(TAG, "服务器返回的数据：" + "reqIdList: " + reqIdList.size()+"\n" + mData);
+                    if (reqIdList == null || reqIdList.size() <= 0) {
+                        SendBroadCastUtil.sendServerData(mContext, mData);
+                        return;
+                    }
+                    for (String mStr : reqIdList) {
+                        Log.e(TAG, mStr);
+                        if (mData.contains(mStr)) {
+                            if (mDataMap.containsKey(mStr)) {
+                                ResponseListener responseListener = mDataMap.get(mStr);
+                                responseListener.onSuccess(mData);
+                                mDataMap.remove(mStr);
+                                reqIdList.remove(mStr);
+                                if (mTimeOutMap.containsKey(mStr)) {
+                                    mTimeOutMap.remove(mStr);
+                                }
+                            }
+                        } else {
+                            SendBroadCastUtil.sendServerData(mContext, mData);
+                        }
+                    }
+                }
+            };
+            synchronized (this) {
+                try {
+                    notify();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            Looper.loop();
+        }
+    }
+
+    private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(3);
+    //超时处理（Time out）
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            if (mTimeOutMap != null && mTimeOutMap.size() > 0) {
+                long receiveTime = System.currentTimeMillis();
+                Iterator<Map.Entry<String, Long>> entries = mTimeOutMap.entrySet().iterator();
+                while (entries.hasNext()) {
+                    Map.Entry<String, Long> entry = entries.next();
+                    String reStrId = entry.getKey();
+                    long sendTime = entry.getValue();
+                    if (receiveTime - sendTime > timeout*1000) {
+                        if (mDataMap.containsKey(reStrId)) {
+                            ResponseListener responseListener = mDataMap.get(reStrId);
+                            responseListener.onFail(SocketCode.TIME_OUT);
+                            mDataMap.remove(reStrId);
+                            mTimeOutMap.remove(reStrId);
+                            if (reqIdList.contains(reStrId)) {
+                                reqIdList.remove(reStrId);
+
+                            }
+                        }
+                    }
+                    System.out.println("Time out Key = " + entry.getKey() + ", Time outValue = " + entry.getValue());
+                }
+            }
+        }
+    };
+
 }
