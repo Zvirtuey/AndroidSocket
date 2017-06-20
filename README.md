@@ -69,6 +69,6 @@ How do I use AndroidSocket?（使用说明）
 
 Bugs and Feedback
 -----
-<p>For bugs, feature requests, and discussion please use [GitHub Issues](https://github.com/Zvirtuey/AndroidSocket/issues "悬停显示").</p>
+<p>For bugs, feature requests, and discussion please use <a href="https://github.com/Zvirtuey/AndroidSocket/issues" title="GitHub Issues">GitHub Issues</a></p>
 
 
