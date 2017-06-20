@@ -1,5 +1,5 @@
 # AndroidSocket #
-A simple Android, socket communication, you're gonna love it！<br><br><br><br><br>
+A simple Android socket communication, you're gonna love it！<br><br><br><br><br>
 
 
 How do I use AndroidSocket?（使用说明）
@@ -58,5 +58,11 @@ How do I use AndroidSocket?（使用说明）
                             Log.e("Test server data", "callback error：" + failCode);
                         }
                     });
-<p><font size="16" color="red">其中参数1代表是请求的数据，参数2代表是返回数据中的唯一标识，可以是请求ID、token值或者能标识唯一性的String</font></p>
+<p>其中参数1代表是请求的数据，参数2代表是返回数据中的唯一标识，可以是请求ID、token值或者能标识唯一性的字符串</p>
 <p>Where parameter 1 represents the requested data, parameter 2 represents a unique identity in the returned data, either a request ID, a token value, or a string that uniquely identifies the uniqueness.</p>
+
+
+### Bugs and Feedback<br>
+    For bugs, feature requests, and discussion please use [GitHub Issues](https://github.com/Zvirtuey/AndroidSocket/issues "悬停显示").
+
+
