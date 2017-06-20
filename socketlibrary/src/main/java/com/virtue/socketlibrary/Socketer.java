@@ -136,7 +136,7 @@ public class Socketer extends Thread {
     @Override
     public void run() {
         while (isRuning) {
-            while (socket == null || !socket.isConnected() || isServerClose(socket)) {
+            while (socket == null || !socket.isConnected() || isClosedServer(socket)) {
                 try {
                     connectSocket();
                     Log.i(TAG, "连接服务器");
@@ -161,7 +161,7 @@ public class Socketer extends Thread {
                         isConnected = true;
                         SendBroadCastUtil.sendNetworkStateBroadcast(mContext, isConnected);
                     }
-                    Log.i(TAG, "连接服务器等待接受消息,缓冲区=" + socket.getReceiveBufferSize());
+                    Log.i(TAG, "连接服务器等待接受消息" );
                     try {
                         int len = 0;
                         byte[] temp;
@@ -280,7 +280,7 @@ public class Socketer extends Thread {
         }
     }
 
-    public Boolean isServerClose(Socket socket) {
+    public Boolean isClosedServer(Socket socket) {
         try {
             socket.sendUrgentData(0xFF);// 发送1个字节的紧急数据，默认情况下，服务器端没有开启紧急数据处理，不影响正常通信
             return false;

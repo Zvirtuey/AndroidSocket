@@ -32,7 +32,7 @@ public class MySocketService extends Service {
 
     @Override
     public void onCreate() {
-        Socketer.getInstance(getApplicationContext()).bindServerContect("192.168.1.108", 20180)
+        Socketer.getInstance(getApplicationContext()).bindServerContect("123.57.56.201", 20083)
                 .setTimeout(15).setEncode("UTF_8")
                 .setReceiveType(ReceiveType.SEPARATION_SIGN)
                 .setEndCharSequence("\r\n")

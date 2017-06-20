@@ -26,34 +26,31 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //Open Socket Service
         startService(new Intent(this, MySocketService.class));
-
-
         tvRequest = (TextView) findViewById(R.id.tv_request);
         tvResponse = (TextView) findViewById(R.id.tv_response);
         btSend = (Button) findViewById(R.id.bt_send);
-        Gson gson=new Gson();
-
+        Gson gson = new Gson();
         TestBean codeGetModle = new TestBean();
-        codeGetModle.protver="100";
-        codeGetModle.pkgtype=1;
-        codeGetModle.command=15;
-        codeGetModle.seq=100;
+        codeGetModle.protver = "100";
+        codeGetModle.pkgtype = 1;
+        codeGetModle.command = 15;
+        codeGetModle.seq = 100;
         TestBean.Inform in = codeGetModle.body;
         in.cmd = type;
-        in.Phone = "1872566";
+        in.Phone = "18500000000";
         final String json = gson.toJson(codeGetModle);
         // bean转字符串并发送
         tvRequest.setText(json);
         btSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.e("测试服务","点击了");
-                String reDataStr=json + "\r\n";
+                String reDataStr = json + "\r\n";
                 Socketer.getInstance(MainActivity.this).sendStrData(reDataStr, "\"seq\":100", new ResponseListener() {
                     @Override
                     public void onSuccess(final String data) {
-                        Log.e("测试服务","服务器返回数据："+data);
+                        Log.i("Test server data", "callback data：" + data);
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -64,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onFail(int failCode) {
-                        Log.e("测试服务","返回错误码："+failCode);
+                        Log.e("Test server data", "callback error：" + failCode);
                     }
                 });
             }
