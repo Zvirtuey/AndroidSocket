@@ -62,7 +62,8 @@ How do I use AndroidSocket?（使用说明）
 <p>Where parameter 1 represents the requested data, parameter 2 represents a unique identity in the returned data, either a request ID, a token value, or a string that uniquely identifies the uniqueness.</p>
 
 
-### Bugs and Feedback<br>
-    For bugs, feature requests, and discussion please use [GitHub Issues](https://github.com/Zvirtuey/AndroidSocket/issues "悬停显示").
+Bugs and Feedback
+-----
+    <p>For bugs, feature requests, and discussion please use [GitHub Issues](https://github.com/Zvirtuey/AndroidSocket/issues "悬停显示").</p>
 
 
