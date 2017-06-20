@@ -8,7 +8,8 @@ How do I use AndroidSocket?（使用说明）
 #### 1.First you need to build a service for socket communication before you use it.(在使用之前建一个服务，用于socket通讯)<br>
     startService(new Intent(this, MySocketService.class));
 
-<br>
+
+
 #### 2.In the service, configure the relevant parameters.(服务中配置连接参数)<br>
     Socketer.getInstance(getApplicationContext()).bindServerContect("123.57.56.201", 20083) //配置socket地址和端口
                 .setTimeout(15).setEncode("UTF_8") //Configure Timeout and encoding,Timeout unit is seconds配置超时时间与编码
@@ -22,14 +23,16 @@ How do I use AndroidSocket?（使用说明）
                 .setMsgLength(2048) //Fixed length receive 配置固定长度大小接收
                 .setMsgLength(1500).start();
 
-<br>
+
+
 #### 3.If the service has unsolicited information to you, you need to register a broadcast, like this:(如果服务有主推消息，你需要注册以下广播)<br>
            IntentFilter intentFilter = new IntentFilter();
            intentFilter.addAction(BroadCastType.SERVER_NOTICE);
            dataReceiver = new MessageReceiver();
            registerReceiver(dataReceiver, intentFilter);
 
-<br>
+
+
 #### 4.Broadcast reception is as follows：(广播接收如下)<br>
     @Override
              public void onReceive(Context context, Intent intent) {
@@ -39,7 +42,8 @@ How do I use AndroidSocket?（使用说明）
                   }
              }
 
-<br>
+
+
 #### 5.Send a request to the server（发送请求到服务器）<br>
     Socketer.getInstance(MainActivity.this).sendStrData(reDataStr, "\"seq\":100", new ResponseListener() {
                         @Override
@@ -61,7 +65,8 @@ How do I use AndroidSocket?（使用说明）
 <p>其中参数1代表是请求的数据，参数2代表是返回数据中的唯一标识，可以是请求ID、token值或者能标识唯一性的字符串</p>
 <p>Where parameter 1 represents the requested data, parameter 2 represents a unique identity in the returned data, either a request ID, a token value, or a string that uniquely identifies the uniqueness.</p>
 
-<br>
+
+
 Bugs and Feedback
 -----
 <p>For bugs, feature requests, and discussion please use [GitHub Issues](https://github.com/Zvirtuey/AndroidSocket/issues "悬停显示").</p>
