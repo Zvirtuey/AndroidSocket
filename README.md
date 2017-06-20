@@ -58,4 +58,4 @@ How do I use AndroidSocket?（使用说明）
                             Log.e("Test server data", "callback error：" + failCode);
                         }
                     });
-    <br><font size="16" color="red">其中参数1代表是请求的数据，参数2代表是返回数据中的唯一标识，可以是请求ID、token值或者能标识唯一性的String</font>
+    <br><p><font size="16" color="red">其中参数1代表是请求的数据，参数2代表是返回数据中的唯一标识，可以是请求ID、token值或者能标识唯一性的String</font></p>
