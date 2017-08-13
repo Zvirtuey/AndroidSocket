@@ -2,6 +2,19 @@
 A simple Android socket communication, you're gonna love it！<br><br>
 ![Alt text](https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1497958504351&di=4b57a7e68c56540f95beb62a9bb92cc3&imgtype=0&src=http%3A%2F%2Fe.hiphotos.baidu.com%2Fbaike%2Fw%253D268%2Fsign%3D5b952a087e3e6709be0042f903c79fb8%2F34fae6cd7b899e51f3a0ec3b43a7d933c995d143ad4b2dcf.jpg)<br><br><br>
 
+Add EventBus to your project
+-----
+
+#### Gradle <br>
+     compile 'com.virtue.androidsocket:AndroidSocket:1.0.2' <br>
+     Maven<br>
+     <dependency>
+       <groupId>com.virtue.androidsocket</groupId>
+       <artifactId>AndroidSocket</artifactId>
+       <version>1.0.2</version>
+       <type>pom</type>
+     </dependency>
+     <br>
 
 How do I use AndroidSocket?（使用说明）
 -----
