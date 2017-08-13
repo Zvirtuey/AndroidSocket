@@ -16,7 +16,7 @@ Add AndroidSocket to your project
        <type>pom</type>
      </dependency>
 
-     <br><br>
+
 
 How do I use AndroidSocket?（使用说明）
 -----
