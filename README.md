@@ -41,9 +41,11 @@ How do I use AndroidSocket?（使用说明）
 
 
 <br>
-## 1.Auto Parse ! （自动解析包含服务器主推通知和请求响应）
-If the service has unsolicited information to you, you need to register a broadcast, like this:(如果服务有主推通知消息，你需要注册以下广播)<br>
+1.Auto Parse ! （自动解析包含服务器主推通知和请求响应两种数据）
 -----
+
+####If the service has unsolicited information to you, you need to register a broadcast, like this:(如果服务有主推通知消息，你需要注册以下广播)<br>
+
            //Set parse to Manual
            Socketer.getInstance(MainActivity.this).setParseMode(ParseMode.MANUALLY_PARSE);
            IntentFilter intentFilter = new IntentFilter();
@@ -86,9 +88,10 @@ If the service has unsolicited information to you, you need to register a broadc
 <p>其中参数1代表是请求的数据，参数2代表是返回数据中的唯一标识，可以是请求ID、token值或者能标识唯一性的字符串</p>
 <p>Where parameter 1 represents the requested data, parameter 2 represents a unique identity in the returned data, either a request ID, a token value, or a string that uniquely identifies the uniqueness.</p>
 <br>
-## 2.Manually Parse!（手动解析没有服务主推通知和请求响应之分，完全由自己自己定义解析）
- If you want to parse the response data yourself（如果想自己解析响应数据）<br>
+<br>
+2.Manually Parse!（手动解析没有服务主推通知和请求响应之分，完全由自己自定义解析）
 ------
+#### If you want to parse the response data yourself（如果想自己解析响应数据）<br>
      //Set parse to Manual
      Socketer.getInstance(MainActivity.this).setParseMode(ParseMode.MANUALLY_PARSE);
 
