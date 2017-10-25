@@ -1,4 +1,10 @@
 apply plugin: 'com.android.library'
+//apply plugin: 'com.github.dcendents.android-maven'
+//apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven'
+apply plugin: 'com.novoda.bintray-release'
+
+version = "1.0.5" //版本号，下次更新是只需要更改版本号即可
 
 android {
     compileSdkVersion 24
@@ -8,7 +14,7 @@ android {
         minSdkVersion 9
         targetSdkVersion 24
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.5"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -18,6 +24,10 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+    }
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
     }
 }
 
@@ -29,3 +39,93 @@ dependencies {
     compile 'com.android.support:appcompat-v7:24.2.1'
     testCompile 'junit:junit:4.12'
 }
+
+//def siteUrl = 'https://github.com/Zvirtuey/AndroidSocket' // 修改为你的项目的主页
+//def gitUrl = 'https://github.com/Zvirtuey/AndroidSocket.git' // 修改为你的Git仓库的url
+
+//
+//group = "com.virtue.androidsocket"         // Maven Group ID for the artifact，一般填你唯一的包名
+// 配置maven库，生成POM.xml文件
+//install {
+//    repositories.mavenInstaller {
+//        // This generates POM.xml with proper parameters
+//        pom {
+//            project {
+//                packaging 'aar'
+//                // Add your description here
+//                name 'A simple Android socket communication, you are gonna love it'     //项目描述
+//                url siteUrl
+//                // Set your license
+//                licenses {
+//                    license {
+//                        name 'The Apache Software License, Version 2.0'
+//                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+//                    }
+//                }
+//                developers {
+//                    developer {
+//                        id 'virtue'        //填写的一些基本信息
+//                        name 'virtue'
+//                        email 'zvirtuey@outlook.com'
+//                    }
+//                }
+//                scm {
+//                    connection gitUrl
+//                    developerConnection gitUrl
+//                    url siteUrl
+//                }
+//            }
+//        }
+//    }
+//}
+//生成源文件
+//task sourcesJar(type: Jar) {
+//    from android.sourceSets.main.java.srcDirs
+//    classifier = 'sources'
+//}
+//生成文档
+task javadoc(type: Javadoc) {
+//    source = android.sourceSets.main.java.srcDirs
+//    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    options.encoding "UTF-8"
+    options.charSet 'UTF-8'
+}
+//文档打包成jar
+//task javadocJar(type: Jar, dependsOn: javadoc) {
+//    classifier = 'javadoc'
+//    from javadoc.destinationDir
+//}
+//上传到jcenter所需要的源码文件
+//artifacts {
+//    archives javadocJar
+//    archives sourcesJar
+//}
+//上传到jcenter
+//Properties properties = new Properties()
+//properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+//bintray {
+//    user = properties.getProperty("bintray.user") //读取 local.properties 文件里面的 bintray.user
+//    key = properties.getProperty("bintray.apikey") //读取 local.properties 文件里面的 bintray.apikey
+//    configurations = ['archives']
+//    pkg {
+//        repo = "maven"
+//        name = "AndroidSocket"    //发布到JCenter上的项目名字
+//        websiteUrl = siteUrl
+//        vcsUrl = gitUrl
+//        licenses = ["Apache-2.0"]
+//        publish = true
+//    }
+//}
+
+publish {
+    userOrg = 'virtue'
+    groupId = 'com.virtue.androidsocket'
+    artifactId = 'AndroidSocket'
+    version = '1.0.5'
+    description = 'A simple Android socket communication, you are gonna love it'
+    website = "https://github.com/Zvirtuey/AndroidSocket"
+}
+
+//上传指令
+//gradlew clean build bintrayUpload -PbintrayUser=xxxx  -PbintrayKey=xxxxxxxxxx -PdryRun=false
