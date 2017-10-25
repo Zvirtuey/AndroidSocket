@@ -45,14 +45,15 @@ How do I use AndroidSocket?（使用说明）
 Case1. Auto Parse ! （自动解析包含服务器主推通知和请求响应两种数据）
 -----
 
-####If the service has unsolicited information to you, you need to register a broadcast, like this:(如果服务有主推通知消息，你需要注册以下广播)<br>
+#### If the service has unsolicited information to you, you need to register a broadcast, like this:(如果服务有主推通知消息，你需要注册以下广播)<br>
 
-           //Set parse to Manual
-           Socketer.getInstance(MainActivity.this).setParseMode(ParseMode.MANUALLY_PARSE);
-           IntentFilter intentFilter = new IntentFilter();
-           intentFilter.addAction(BroadCastType.SERVER_NOTICE);
-           MessageReceiver dataReceiver = new MessageReceiver();
-           registerReceiver(dataReceiver, intentFilter);
+      //Set parse to Auto
+      Socketer.getInstance(MainActivity.this).setParseMode(ParseMode.ParseMode.AUTO_PARSE);
+
+      IntentFilter intentFilter = new IntentFilter();
+      intentFilter.addAction(BroadCastType.SERVER_NOTICE);
+      MessageReceiver dataReceiver = new MessageReceiver();
+      registerReceiver(dataReceiver, intentFilter);
 
 
 
@@ -91,7 +92,7 @@ Case1. Auto Parse ! （自动解析包含服务器主推通知和请求响应两
 <br>
 <br>
 
-Case2. Manually Parse!（手动解析没有服务主推通知和请求响应之分，完全由自己自定义解析）
+Case2. Manually Parse!suggest.（手动解析没有服务主推通知和请求响应之分，完全由自己自定义解析）
 ------
 
 #### If you want to parse the response data yourself（如果想自己解析响应数据）<br>
@@ -129,7 +130,7 @@ Case2. Manually Parse!（手动解析没有服务主推通知和请求响应之�
 
 
 
-
+<br>
 Bugs and Feedback
 -----
 <p>For bugs, feature requests, and discussion please use <a href="https://github.com/Zvirtuey/AndroidSocket/issues" title="GitHub Issues">GitHub Issues</a></p>
