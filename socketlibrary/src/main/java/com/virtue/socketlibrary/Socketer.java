@@ -39,18 +39,20 @@ public class Socketer extends Thread {
     private int port = 80; //服务器端口
     private int timeout = 15; //请求超时时长 单位秒（Unit sec）
     private int sendMaxByteLength = 1500; //发送字节数限制 单位字节（Unit byte）
-    private boolean isRuning = true; //是否接受服务器数据
+    private boolean isRunning = true; //是否接受服务器数据
     public boolean isConnected = true; // 是否连接服务器
     private String encode = "UTF-8"; //编码
     private String endCharSequence = "\r\n"; //分割结束标识符
     private String endData = ""; //尾部剩余数据
-    private int msgLength = 0; //固定长度分割
+    private int msgLength = 2048; //固定长度分割
     private ReceiveType receiveType = SEPARATION_SIGN; //接收形式
+    private ParseMode parseMode = ParseMode.AUTO_PARSE; //接收形式
     private SendMsgThread sendMsgThread;
     private ReceiveMsgThread receiveMsgThread;
     private ConcurrentHashMap<String, ResponseListener> mDataMap;
     private ConcurrentHashMap<String, Long> mTimeOutMap;
     private List<String> reqIdList;
+    private OnReceiveListener mReceiveListener;
 
     private Socketer() {
         sendMsgThread = new SendMsgThread();
@@ -61,7 +63,7 @@ public class Socketer extends Thread {
     }
 
     public static final Socketer getInstance(Context context) {
-        mContext = context;
+        mContext = context.getApplicationContext();
         return SingleHolder.INSTANCE;
     }
 
@@ -69,7 +71,7 @@ public class Socketer extends Thread {
         private static final Socketer INSTANCE = new Socketer(); // 创建实例的地方
     }
 
-    public Socketer bindServerContect(String address, int port) {
+    public Socketer bindServerConnect(String address, int port) {
         this.ip = address;
         this.port = port;
         return this;
@@ -79,19 +81,41 @@ public class Socketer extends Thread {
         this.start();
     }
 
+    /**
+     * 获取超时时间
+     *
+     * @return
+     */
     public int getTimeout() {
         return timeout;
     }
 
+    /**
+     * 设置超时时间
+     *
+     * @param timeout
+     * @return
+     */
     public Socketer setTimeout(int timeout) {
         this.timeout = timeout;
         return this;
     }
 
+    /**
+     * 获取发送最大字节数
+     *
+     * @return
+     */
     public int getSendMaxByteLength() {
         return sendMaxByteLength;
     }
 
+    /**
+     * 设置发送最大字节数
+     *
+     * @param sendMaxByteLength
+     * @return
+     */
     public Socketer setSendMaxByteLength(int sendMaxByteLength) {
         this.sendMaxByteLength = sendMaxByteLength;
         return this;
@@ -101,50 +125,118 @@ public class Socketer extends Thread {
         return encode;
     }
 
+    /**
+     * 设置编码
+     *
+     * @param encode
+     * @return
+     */
     public Socketer setEncode(String encode) {
         this.encode = encode;
         return this;
     }
 
+    /**
+     * 获取接收形式
+     *
+     * @return
+     */
     public ReceiveType getReceiveType() {
         return receiveType;
     }
 
+    /**
+     * 设置接收形式
+     *
+     * @param receiveType
+     * @return
+     */
     public Socketer setReceiveType(ReceiveType receiveType) {
         this.receiveType = receiveType;
         return this;
     }
 
+    /**
+     * 获取接收的固定长度值
+     *
+     * @return
+     */
     public int getMsgLength() {
         return msgLength;
     }
 
+    /**
+     * 设置接收固定长度值
+     *
+     * @param msgLength
+     * @return
+     */
     public Socketer setMsgLength(int msgLength) {
         this.msgLength = msgLength;
         return this;
     }
 
+    /**
+     * 获取接收分割符
+     *
+     * @return
+     */
     public String getEndCharSequence() {
         return endCharSequence;
     }
 
+    /**
+     * 设置接收分隔符
+     *
+     * @param endCharSequence
+     * @return
+     */
     public Socketer setEndCharSequence(String endCharSequence) {
         this.endCharSequence = endCharSequence;
         return this;
     }
 
+    /**
+     * 设置响应的解析方式（默认是自动解析）
+     *
+     * @param mMode 解析方式枚举对象（ParseMode）
+     * @return
+     */
+    public Socketer setParseMode(ParseMode mMode) {
+        this.parseMode = mMode;
+        return this;
+    }
+
+
+    /**
+     * 获取响应时的解析方式（默认是自动解析）
+     *
+     * @return
+     */
+    public ParseMode getParseMode() {
+        return parseMode;
+    }
+
     @Override
     public void run() {
-        while (isRuning) {
+        while (isRunning) {
             while (socket == null || !socket.isConnected() || isClosedServer(socket)) {
                 try {
                     connectSocket();
                     Log.i(TAG, "连接服务器");
+                    if(mReceiveListener!=null){
+                        mReceiveListener.onConnected(this);
+                    }
+                    //开启超时任务
+                    scheduledExecutorService.scheduleWithFixedDelay(runnable, timeout, 1, TimeUnit.SECONDS);
                 } catch (IOException e) {
                     e.printStackTrace();
                     Log.e(TAG, "run连接服务器失败,请检测网络和服务器");
                     if (isConnected == true) {
                         isConnected = false;
+                        if(mReceiveListener!=null){
+                            mReceiveListener.onDisconnected(this);
+                        }
                         SendBroadCastUtil.sendNetworkStateBroadcast(mContext, isConnected);
                     }
                     closeConnect();
@@ -159,9 +251,12 @@ public class Socketer extends Thread {
                 if (socket.isConnected() && inputStream != null) {
                     if (isConnected == false) {
                         isConnected = true;
+                        if(mReceiveListener!=null){
+                            mReceiveListener.onConnected(this);
+                        }
                         SendBroadCastUtil.sendNetworkStateBroadcast(mContext, isConnected);
                     }
-                    Log.i(TAG, "连接服务器等待接受消息" );
+                    Log.i(TAG, "连接服务器等待接受消息");
                     try {
                         int len = 0;
                         byte[] temp;
@@ -185,8 +280,6 @@ public class Socketer extends Thread {
                                         endData = splitArray[1];
                                         totalStr = endData;
                                         executeReceiveTask(mData);
-//                                        temp = null;
-//                                        buffer = null;
                                     }
 
                                     break;
@@ -225,14 +318,16 @@ public class Socketer extends Thread {
                     socket = null;
                 }
                 isConnected = false;
+                if(mReceiveListener!=null){
+                    mReceiveListener.onDisconnected(this);
+                }
                 // 没有可接收的数据
             }
         }
-
     }
 
     /**
-     * 发送String数据
+     * 请求服务器String数据
      *
      * @param requestData      请求数据
      * @param confirmId        服务器返回的唯一标识
@@ -247,7 +342,20 @@ public class Socketer extends Thread {
         } else {
             responseListener.onFail(SocketCode.DISCONNECT);
         }
+    }
 
+    /**
+     * 请求服务器String数据
+     *
+     * @param requestData 请求数据
+     * @return
+     */
+    public boolean sendStrData(String requestData) {
+        boolean sendResult = false;
+        if (isConnected) {
+            sendResult = executeSendTask(requestData, null, null);
+        }
+        return sendResult;
     }
 
     public void connectSocket() throws IOException {
@@ -258,7 +366,7 @@ public class Socketer extends Thread {
         socket.setReceiveBufferSize(1024 * 10000);
         outputStream = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encode));
         inputStream = new DataInputStream(socket.getInputStream());
-        isRuning = true;
+        isRunning = true;
     }
 
     /**
@@ -276,7 +384,7 @@ public class Socketer extends Thread {
                 socket.close();
             }
         } catch (Exception e) {
-            e.printStackTrace();// 关闭连接失败 close fail
+            e.printStackTrace(); // 关闭连接失败 close fail
         }
     }
 
@@ -289,7 +397,7 @@ public class Socketer extends Thread {
         }
     }
 
-    public boolean executeSendTask(String data, String requestId, ResponseListener mListener) {
+    public synchronized boolean executeSendTask(String data, String requestId, ResponseListener mListener) {
         if (sendMsgThread == null || !sendMsgThread.isAlive()) {
             sendMsgThread = new SendMsgThread();
             synchronized (sendMsgThread) {
@@ -314,7 +422,7 @@ public class Socketer extends Thread {
         return sendMsgThread.mHandler.sendMessage(msg);
     }
 
-    public boolean executeReceiveTask(String data) {
+    public synchronized boolean executeReceiveTask(String data) {
         if (receiveMsgThread == null || !receiveMsgThread.isAlive()) {
             receiveMsgThread = new ReceiveMsgThread();
             synchronized (receiveMsgThread) {
@@ -378,10 +486,12 @@ public class Socketer extends Thread {
                         return;
                     }
                     try {
-                        mDataMap.put(mReqId, responseListener);
-                        reqIdList.add(mReqId);
-                        long sendTime = System.currentTimeMillis();
-                        mTimeOutMap.put(mReqId, sendTime);
+                        if (mReqId != null && !mReqId.equals("") && parseMode == ParseMode.AUTO_PARSE) {
+                            mDataMap.put(mReqId, responseListener);
+                            reqIdList.add(mReqId);
+                            long sendTime = System.currentTimeMillis();
+                            mTimeOutMap.put(mReqId, sendTime);
+                        }
                         outputStream.write(mData);
                         outputStream.flush();
                         Log.i(TAG, "消息已发送");
@@ -399,7 +509,6 @@ public class Socketer extends Thread {
                         socket = null;
                         return;
                     }
-                    scheduledExecutorService.scheduleWithFixedDelay(runnable, timeout, 1, TimeUnit.SECONDS);
                 }
             };
             synchronized (this) {
@@ -424,26 +533,22 @@ public class Socketer extends Thread {
             mHandler = new Handler(mReceiveLooper) {
                 public void handleMessage(Message msg) {
                     String mData = (String) msg.obj;
-                    Log.w(TAG, "服务器返回的数据：" + "reqIdList: " + reqIdList.size()+"\n" + mData);
-                    if (reqIdList == null || reqIdList.size() <= 0) {
-                        SendBroadCastUtil.sendServerData(mContext, mData);
-                        return;
-                    }
-                    for (String mStr : reqIdList) {
-                        Log.e(TAG, mStr);
-                        if (mData.contains(mStr)) {
-                            if (mDataMap.containsKey(mStr)) {
-                                ResponseListener responseListener = mDataMap.get(mStr);
-                                responseListener.onSuccess(mData);
-                                mDataMap.remove(mStr);
-                                reqIdList.remove(mStr);
-                                if (mTimeOutMap.containsKey(mStr)) {
-                                    mTimeOutMap.remove(mStr);
-                                }
+                    Log.w(TAG, "服务器返回的数据：" + "reqIdList: " + reqIdList.size() + "\n" + mData);
+                    switch (parseMode) {
+                        case AUTO_PARSE: //自动解析
+                            autoParseData(mData);
+
+                            break;
+                        case MANUALLY_PARSE: //手动解析
+                            if (mReceiveListener != null) {
+                                mReceiveListener.onResponse(mData);
                             }
-                        } else {
-                            SendBroadCastUtil.sendServerData(mContext, mData);
-                        }
+
+                            break;
+
+                        default:
+
+                            break;
                     }
                 }
             };
@@ -455,6 +560,37 @@ public class Socketer extends Thread {
                 }
             }
             Looper.loop();
+        }
+
+        private void autoParseData(String mData) {
+            if (reqIdList == null || reqIdList.size() <= 0) {
+                SendBroadCastUtil.sendServerData(mContext, mData);
+                return;
+            }
+            for (String mStr : reqIdList) {
+                Log.e(TAG, mStr);
+                if (mData.contains(mStr)) {
+                    if (mDataMap.containsKey(mStr)) {
+                        ResponseListener responseListener = mDataMap.get(mStr);
+                        responseListener.onSuccess(mData);
+                        mDataMap.remove(mStr);
+                        reqIdList.remove(mStr);
+                        if (mTimeOutMap.containsKey(mStr)) {
+                            mTimeOutMap.remove(mStr);
+                        }
+                    }
+                } else {
+                    SendBroadCastUtil.sendServerData(mContext, mData);
+                }
+            }
+        }
+    }
+
+    public void setOnReceiveListener(OnReceiveListener mReceiveListener) {
+        if (mReceiveListener != null) {
+            this.mReceiveListener = mReceiveListener;
+        } else {
+            Log.e(TAG, "mReceiveListener is null");
         }
     }
 
@@ -470,7 +606,7 @@ public class Socketer extends Thread {
                     Map.Entry<String, Long> entry = entries.next();
                     String reStrId = entry.getKey();
                     long sendTime = entry.getValue();
-                    if (receiveTime - sendTime > timeout*1000) {
+                    if (receiveTime - sendTime > timeout * 1000) {
                         if (mDataMap.containsKey(reStrId)) {
                             ResponseListener responseListener = mDataMap.get(reStrId);
                             responseListener.onFail(SocketCode.TIME_OUT);
@@ -478,7 +614,6 @@ public class Socketer extends Thread {
                             mTimeOutMap.remove(reStrId);
                             if (reqIdList.contains(reStrId)) {
                                 reqIdList.remove(reStrId);
-
                             }
                         }
                     }
@@ -487,5 +622,6 @@ public class Socketer extends Thread {
             }
         }
     };
+
 
 }

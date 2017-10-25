@@ -6,13 +6,13 @@ Add AndroidSocket to your project
 -----
 
 #### Gradle <br>
-     compile 'com.virtue.androidsocket:AndroidSocket:1.0.2'
+     compile 'com.virtue.androidsocket:AndroidSocket:1.0.5'
 
 #### Maven <br>
      <dependency>
        <groupId>com.virtue.androidsocket</groupId>
        <artifactId>AndroidSocket</artifactId>
-       <version>1.0.2</version>
+       <version>1.0.5</version>
        <type>pom</type>
      </dependency>
 
@@ -21,35 +21,39 @@ Add AndroidSocket to your project
 How do I use AndroidSocket?（使用说明）
 -----
 
-#### 1.First you need to build a service for socket communication before you use it.(在使用之前建一个服务，用于socket通讯)<br>
+#### First you need to build a service for socket communication before you use it.(在使用之前建一个服务，用于socket通讯)<br>
     startService(new Intent(this, MySocketService.class));
 
 
 
-#### 2.In the service, configure the relevant parameters.(服务中配置连接参数)<br>
-    Socketer.getInstance(getApplicationContext()).bindServerContect("123.57.56.201", 20083) //配置socket地址和端口
+#### In the service, configure the relevant parameters.(服务中配置连接参数)<br>
+    Socketer.getInstance(getApplicationContext()).bindServerConnect("123.57.56.201", 20083) //配置socket地址和端口
                 .setTimeout(15).setEncode("UTF_8") //Configure Timeout and encoding,Timeout unit is seconds配置超时时间与编码
                 .setReceiveType(ReceiveType.SEPARATION_SIGN) //Configuring the Receive Type配置接收形式以分隔符接收
                 .setEndCharSequence("\r\n") //"\r\n" is End for split 配置结束符
                 .setMsgLength(1500).start(); //Send Max bytes配置一次性最多发送的消息字节数
     或者or：
-    Socketer.getInstance(getApplicationContext()).bindServerContect("123.57.56.201", 20083)
+    Socketer.getInstance(getApplicationContext()).bindServerConnect("123.57.56.201", 20083)
                 .setTimeout(15).setEncode("UTF_8")
                 .setReceiveType(ReceiveType.FIXED_LENGTH) //Configuring the Receive Type配置接收形式以分隔符接收
                 .setMsgLength(2048) //Fixed length receive 配置固定长度大小接收
                 .setMsgLength(1500).start();
 
 
-
-#### 3.If the service has unsolicited information to you, you need to register a broadcast, like this:(如果服务有主推消息，你需要注册以下广播)<br>
+<br>
+## 1.Auto Parse ! （自动解析包含服务器主推通知和请求响应）
+If the service has unsolicited information to you, you need to register a broadcast, like this:(如果服务有主推通知消息，你需要注册以下广播)<br>
+-----
+           //Set parse to Manual
+           Socketer.getInstance(MainActivity.this).setParseMode(ParseMode.MANUALLY_PARSE);
            IntentFilter intentFilter = new IntentFilter();
            intentFilter.addAction(BroadCastType.SERVER_NOTICE);
-           dataReceiver = new MessageReceiver();
+           MessageReceiver dataReceiver = new MessageReceiver();
            registerReceiver(dataReceiver, intentFilter);
 
 
 
-#### 4.Broadcast reception is as follows：(广播接收如下)<br>
+#### Broadcast reception is as follows：(广播接收如下)<br>
     @Override
              public void onReceive(Context context, Intent intent) {
                   if (intent.getAction() == BroadCastType.SERVER_NOTICE) {
@@ -60,7 +64,7 @@ How do I use AndroidSocket?（使用说明）
 
 
 
-#### 5.Send a request to the server（发送请求到服务器）<br>
+#### Send a request to the server（发送请求到服务器）<br>
     Socketer.getInstance(MainActivity.this).sendStrData(reDataStr, "\"seq\":100", new ResponseListener() {
                         @Override
                         public void onSuccess(final String data) {
@@ -78,8 +82,45 @@ How do I use AndroidSocket?（使用说明）
                             Log.e("Test server data", "callback error：" + failCode);
                         }
                     });
+<br>
 <p>其中参数1代表是请求的数据，参数2代表是返回数据中的唯一标识，可以是请求ID、token值或者能标识唯一性的字符串</p>
 <p>Where parameter 1 represents the requested data, parameter 2 represents a unique identity in the returned data, either a request ID, a token value, or a string that uniquely identifies the uniqueness.</p>
+<br>
+## 2.Manually Parse!（手动解析没有服务主推通知和请求响应之分，完全由自己自己定义解析）
+ If you want to parse the response data yourself（如果想自己解析响应数据）<br>
+------
+     //Set parse to Manual
+     Socketer.getInstance(MainActivity.this).setParseMode(ParseMode.MANUALLY_PARSE);
+
+#### Set Listener for response（设置监听响应）<br>
+       Socketer.getInstance(MainActivity.this).setOnReceiveListener(new OnReceiveListener() {
+                   @Override
+                   public void onConnected(Socketer socketer) {
+
+                   }
+
+                   @Override
+                   public void onDisconnected(Socketer socketer) {
+
+                   }
+
+                   @Override
+                   public void onResponse(final String data) {
+                       runOnUiThread(new Runnable() {
+                           @Override
+                           public void run() {
+                               //response data
+                               tvResponse.setTextColor(getResources().getColor(R.color.blue));
+                               tvResponse.setText(data);
+                               //... your parse ...
+                           }
+                       });
+                   }
+        });
+
+#### Send data（发送数据）<br>
+      Socketer.getInstance(MainActivity.this).sendStrData(reDataStr); //request
+
 
 
 

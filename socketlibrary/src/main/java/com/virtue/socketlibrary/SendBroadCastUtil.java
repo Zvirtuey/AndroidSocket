@@ -2,11 +2,15 @@ package com.virtue.socketlibrary;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
+
+import java.io.Serializable;
 
 public class SendBroadCastUtil {
 
     /**
      * 发送网络状态广播 (send network Network status)
+     *
      * @param mContext
      * @param isConnected
      */
@@ -18,15 +22,17 @@ public class SendBroadCastUtil {
     }
 
     /**
-     * 发送服务器主推信息 (send message from server)
+     * 发送服务器主推通知信息 (send message from server)
+     *
      * @param mContext
      * @param mData
      */
-    public static void sendServerData(Context mContext,String mData){
+    public static void sendServerData(Context mContext, String mData) {
         Intent intent = new Intent();
         intent.putExtra(BroadCastType.SERVER_NOTICE_DATA, mData);
         intent.setAction(BroadCastType.SERVER_NOTICE);
         mContext.sendBroadcast(intent);
     }
+
 
 }

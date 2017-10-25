@@ -10,8 +10,8 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.virtue.socketlibrary.BroadCastType;
+import com.virtue.socketlibrary.ParseMode;
 import com.virtue.socketlibrary.ReceiveType;
-import com.virtue.socketlibrary.SocketCode;
 import com.virtue.socketlibrary.Socketer;
 
 /**
@@ -32,7 +32,8 @@ public class MySocketService extends Service {
 
     @Override
     public void onCreate() {
-        Socketer.getInstance(getApplicationContext()).bindServerContect("123.57.56.201", 20083)
+        super.onCreate();
+        Socketer.getInstance(getApplicationContext()).bindServerConnect("123.57.56.201", 20083)
                 .setTimeout(15).setEncode("UTF_8")
                 .setReceiveType(ReceiveType.SEPARATION_SIGN)
                 .setEndCharSequence("\r\n")
@@ -41,7 +42,6 @@ public class MySocketService extends Service {
         intentFilter.addAction(BroadCastType.SERVER_NOTICE);
         dataReceiver = new MessageReceiver();
         registerReceiver(dataReceiver, intentFilter);
-        super.onCreate();
     }
 
     class MessageReceiver extends BroadcastReceiver {
