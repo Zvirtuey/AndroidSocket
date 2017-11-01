@@ -26,6 +26,8 @@ import static com.virtue.socketlibrary.ReceiveType.SEPARATION_SIGN;
 
 /**
  * Created by virtue on 2017/2/15.
+ *
+ * https://github.com/Zvirtuey/AndroidSocket
  */
 
 public class Socketer extends Thread {

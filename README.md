@@ -31,13 +31,13 @@ How do I use AndroidSocket?（使用说明）
                 .setTimeout(15).setEncode("UTF_8") //Configure Timeout and encoding,Timeout unit is seconds配置超时时间与编码
                 .setReceiveType(ReceiveType.SEPARATION_SIGN) //Configuring the Receive Type配置接收形式以分隔符接收
                 .setEndCharSequence("\r\n") //"\r\n" is End for split 配置结束符
-                .setMsgLength(1500).start(); //Send Max bytes配置一次性最多发送的消息字节数
+                .setSendMaxByteLength(1500).start(); //Send Max bytes配置一次性最多发送的消息字节数
     或者or：
     Socketer.getInstance(getApplicationContext()).bindServerConnect("123.57.56.201", 20083)
                 .setTimeout(15).setEncode("UTF_8")
                 .setReceiveType(ReceiveType.FIXED_LENGTH) //Configuring the Receive Type配置接收形式以分隔符接收
                 .setMsgLength(2048) //Fixed length receive 配置固定长度大小接收
-                .setMsgLength(1500).start();
+                .setSendMaxByteLength(1500).start(); //配置一次性最多发送的消息字节数
 
 
 <br>
