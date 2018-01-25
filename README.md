@@ -48,7 +48,7 @@ Case1. Auto Parse ! （自动解析包含服务器主推通知和请求响应两
 #### If the service has unsolicited information to you, you need to register a broadcast, like this:(如果服务有主推通知消息，你需要注册以下广播)<br>
 
       //Set parse to Auto
-      Socketer.getInstance(MainActivity.this).setParseMode(ParseMode.ParseMode.AUTO_PARSE);
+      Socketer.getInstance(MainActivity.this).setParseMode(ParseMode.AUTO_PARSE);
 
       IntentFilter intentFilter = new IntentFilter();
       intentFilter.addAction(BroadCastType.SERVER_NOTICE);
