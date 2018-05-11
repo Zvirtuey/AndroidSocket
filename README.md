@@ -141,7 +141,7 @@ Other
      //Socketer.getInstance(getApplicationContext()).setEncode("UTF_8");
      //Socketer.getInstance(getApplicationContext()).setReceiveType(ReceiveType.SEPARATION_SIGN);
      //Socketer.getInstance(getApplicationContext()).setTimeout(15); ...
-     Socketer.getInstance(getApplicationContext()).reConnectSever(ip, port);
+      Socketer.getInstance(getApplicationContext()).reConnectSever(ip, port);
 
 <br><br>
 
