@@ -4,7 +4,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'maven'
 apply plugin: 'com.novoda.bintray-release'
 
-version = "1.0.5" //版本号，下次更新是只需要更改版本号即可
+version = "1.0.6" //版本号，下次更新是只需要更改版本号即可
 
 android {
     compileSdkVersion 24
@@ -14,7 +14,7 @@ android {
         minSdkVersion 9
         targetSdkVersion 24
         versionCode 1
-        versionName "1.0.5"
+        versionName "1.0.6"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -122,7 +122,7 @@ publish {
     userOrg = 'virtue'
     groupId = 'com.virtue.androidsocket'
     artifactId = 'AndroidSocket'
-    version = '1.0.5'
+    version = '1.0.6'
     description = 'A simple Android socket communication, you are gonna love it'
     website = "https://github.com/Zvirtuey/AndroidSocket"
 }
