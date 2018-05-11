@@ -1,4 +1,4 @@
-package com.virtue.socketlibrary;
+package com.virtue.socketlibrary.manager;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -6,6 +6,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+
+import com.virtue.socketlibrary.type.ParseMode;
+import com.virtue.socketlibrary.type.ReceiveType;
+import com.virtue.socketlibrary.utils.OnReceiveListener;
+import com.virtue.socketlibrary.utils.ResponseListener;
+import com.virtue.socketlibrary.utils.SendBroadCastUtil;
+import com.virtue.socketlibrary.utils.SocketCode;
 
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
@@ -22,11 +29,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static com.virtue.socketlibrary.ReceiveType.SEPARATION_SIGN;
+import static com.virtue.socketlibrary.type.ReceiveType.SEPARATION_SIGN;
 
 /**
  * Created by virtue on 2017/2/15.
- *
+ * <p>
  * https://github.com/Zvirtuey/AndroidSocket
  */
 
@@ -51,7 +58,7 @@ public class Socketer extends Thread {
     private ParseMode parseMode = ParseMode.AUTO_PARSE; //接收形式
     private SendMsgThread sendMsgThread;
     private ReceiveMsgThread receiveMsgThread;
-    private ConcurrentHashMap<String, ResponseListener> mDataMap;
+    private ConcurrentHashMap<String, ResponseListener> mListenerMap;
     private ConcurrentHashMap<String, Long> mTimeOutMap;
     private List<String> reqIdList;
     private OnReceiveListener mReceiveListener;
@@ -59,7 +66,7 @@ public class Socketer extends Thread {
     private Socketer() {
         sendMsgThread = new SendMsgThread();
         receiveMsgThread = new ReceiveMsgThread();
-        mDataMap = new ConcurrentHashMap();
+        mListenerMap = new ConcurrentHashMap();
         mTimeOutMap = new ConcurrentHashMap();
         reqIdList = Collections.synchronizedList(new ArrayList<String>());
     }
@@ -226,7 +233,7 @@ public class Socketer extends Thread {
                 try {
                     connectSocket();
                     Log.i(TAG, "连接服务器");
-                    if(mReceiveListener!=null){
+                    if (mReceiveListener != null) {
                         mReceiveListener.onConnected(this);
                     }
                     //开启超时任务
@@ -236,7 +243,7 @@ public class Socketer extends Thread {
                     Log.e(TAG, "run连接服务器失败,请检测网络和服务器");
                     if (isConnected == true) {
                         isConnected = false;
-                        if(mReceiveListener!=null){
+                        if (mReceiveListener != null) {
                             mReceiveListener.onDisconnected(this);
                         }
                         SendBroadCastUtil.sendNetworkStateBroadcast(mContext, isConnected);
@@ -253,7 +260,7 @@ public class Socketer extends Thread {
                 if (socket.isConnected() && inputStream != null) {
                     if (isConnected == false) {
                         isConnected = true;
-                        if(mReceiveListener!=null){
+                        if (mReceiveListener != null) {
                             mReceiveListener.onConnected(this);
                         }
                         SendBroadCastUtil.sendNetworkStateBroadcast(mContext, isConnected);
@@ -320,7 +327,7 @@ public class Socketer extends Thread {
                     socket = null;
                 }
                 isConnected = false;
-                if(mReceiveListener!=null){
+                if (mReceiveListener != null) {
                     mReceiveListener.onDisconnected(this);
                 }
                 // 没有可接收的数据
@@ -360,7 +367,7 @@ public class Socketer extends Thread {
         return sendResult;
     }
 
-    public void connectSocket() throws IOException {
+    private void connectSocket() throws IOException {
         endData = "";
         socket = new Socket(ip, port);
         socket.setSoTimeout(15 * 1000);
@@ -369,6 +376,24 @@ public class Socketer extends Thread {
         outputStream = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encode));
         inputStream = new DataInputStream(socket.getInputStream());
         isRunning = true;
+    }
+
+    /**
+     * 重新连接服务器，可以换服务器地址、端口
+     * 如果重新连接的服务器配置信息不一样请先设置各个配置（如编码、解析方式、超时时间等），然后再调用此接口
+     *
+     * @param ip
+     * @param port
+     */
+    public void reConnectSever(String ip, int port) {
+        boolean isAlive = isAlive();
+        if (isAlive) {
+            Socketer.getInstance(mContext).closeConnect();
+            Socketer.getInstance(mContext).closeSocketer();
+        } else {
+            bindServerConnect(ip, port).start();
+        }
+        Socketer.getInstance(mContext).bindServerConnect(ip, port);
     }
 
     /**
@@ -388,6 +413,13 @@ public class Socketer extends Thread {
         } catch (Exception e) {
             e.printStackTrace(); // 关闭连接失败 close fail
         }
+    }
+
+    private void closeSocketer() {
+        reqIdList.clear();
+        mTimeOutMap.clear();
+        mListenerMap.clear();
+        ip = "";
     }
 
     public Boolean isClosedServer(Socket socket) {
@@ -489,7 +521,7 @@ public class Socketer extends Thread {
                     }
                     try {
                         if (mReqId != null && !mReqId.equals("") && parseMode == ParseMode.AUTO_PARSE) {
-                            mDataMap.put(mReqId, responseListener);
+                            mListenerMap.put(mReqId, responseListener);
                             reqIdList.add(mReqId);
                             long sendTime = System.currentTimeMillis();
                             mTimeOutMap.put(mReqId, sendTime);
@@ -572,10 +604,10 @@ public class Socketer extends Thread {
             for (String mStr : reqIdList) {
                 Log.e(TAG, mStr);
                 if (mData.contains(mStr)) {
-                    if (mDataMap.containsKey(mStr)) {
-                        ResponseListener responseListener = mDataMap.get(mStr);
+                    if (mListenerMap.containsKey(mStr)) {
+                        ResponseListener responseListener = mListenerMap.get(mStr);
                         responseListener.onSuccess(mData);
-                        mDataMap.remove(mStr);
+                        mListenerMap.remove(mStr);
                         reqIdList.remove(mStr);
                         if (mTimeOutMap.containsKey(mStr)) {
                             mTimeOutMap.remove(mStr);
@@ -609,10 +641,10 @@ public class Socketer extends Thread {
                     String reStrId = entry.getKey();
                     long sendTime = entry.getValue();
                     if (receiveTime - sendTime > timeout * 1000) {
-                        if (mDataMap.containsKey(reStrId)) {
-                            ResponseListener responseListener = mDataMap.get(reStrId);
+                        if (mListenerMap.containsKey(reStrId)) {
+                            ResponseListener responseListener = mListenerMap.get(reStrId);
                             responseListener.onFail(SocketCode.TIME_OUT);
-                            mDataMap.remove(reStrId);
+                            mListenerMap.remove(reStrId);
                             mTimeOutMap.remove(reStrId);
                             if (reqIdList.contains(reStrId)) {
                                 reqIdList.remove(reStrId);

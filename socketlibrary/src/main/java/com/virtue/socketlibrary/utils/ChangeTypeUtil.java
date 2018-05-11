@@ -1,4 +1,4 @@
-package com.virtue.socketlibrary;
+package com.virtue.socketlibrary.utils;
 
 public class ChangeTypeUtil {
 

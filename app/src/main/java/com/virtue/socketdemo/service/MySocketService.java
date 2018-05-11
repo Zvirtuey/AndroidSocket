@@ -9,10 +9,9 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.virtue.socketlibrary.BroadCastType;
-import com.virtue.socketlibrary.ParseMode;
-import com.virtue.socketlibrary.ReceiveType;
-import com.virtue.socketlibrary.Socketer;
+import com.virtue.socketlibrary.manager.Socketer;
+import com.virtue.socketlibrary.type.BroadCastType;
+import com.virtue.socketlibrary.type.ReceiveType;
 
 /**
  * Created by virtue on 2017/2/16.
@@ -20,7 +19,6 @@ import com.virtue.socketlibrary.Socketer;
 
 public class MySocketService extends Service {
 
-    public static Socketer socketer;
     private static final String TAG = "MySocketService";
     private MessageReceiver dataReceiver;
 

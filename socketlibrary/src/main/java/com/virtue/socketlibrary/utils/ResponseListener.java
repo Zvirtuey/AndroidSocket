@@ -1,4 +1,4 @@
-package com.virtue.socketlibrary;
+package com.virtue.socketlibrary.utils;
 
 /**
  * Created by virtue on 2017/6/10.

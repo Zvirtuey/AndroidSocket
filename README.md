@@ -21,7 +21,7 @@ Add AndroidSocket to your project
 How do I use AndroidSocket?（使用说明）
 -----
 
-#### First you need to build a service for socket communication before you use it.(在使用之前建一个服务，用于socket通讯)<br>
+#### First you need to build a service for socket communication and heartbeat tasks before you use it.(在使用之前建一个服务，用于socket通讯, 在服务中可以建立自己的心跳任务)<br>
     startService(new Intent(this, MySocketService.class));
 
 
@@ -130,7 +130,20 @@ Case2. Manually Parse!suggest.（手动解析没有服务主推通知和请求�
 
 
 
-<br>
+<br><br>
+
+Other
+-----
+
+#### If you want to reconnect to other servers(如过你想重新连接另一个服务器)<br>
+     //If the configuration of another server is different, first configure the information
+     //如果另一服务器配置不一样请先配置信息
+     //Socketer.getInstance(getApplicationContext()).setEncode("UTF_8");
+     //Socketer.getInstance(getApplicationContext()).setReceiveType(ReceiveType.SEPARATION_SIGN);
+     //Socketer.getInstance(getApplicationContext()).setTimeout(15); ...
+     Socketer.getInstance(getApplicationContext()).reConnectSever(ip, port);
+
+<br><br>
 
 Bugs and Feedback
 -----

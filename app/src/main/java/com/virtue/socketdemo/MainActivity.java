@@ -14,15 +14,14 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 import com.virtue.socketdemo.bean.TestBean;
 import com.virtue.socketdemo.service.MySocketService;
-import com.virtue.socketlibrary.OnReceiveListener;
-import com.virtue.socketlibrary.ParseMode;
-import com.virtue.socketlibrary.ResponseListener;
-import com.virtue.socketlibrary.Socketer;
+import com.virtue.socketlibrary.manager.Socketer;
+import com.virtue.socketlibrary.type.ParseMode;
+import com.virtue.socketlibrary.utils.OnReceiveListener;
+import com.virtue.socketlibrary.utils.ResponseListener;
 
 import java.util.ArrayList;
 
 import static android.R.attr.type;
-import static com.virtue.socketdemo.R.color.blue;
 
 public class MainActivity extends AppCompatActivity {
 

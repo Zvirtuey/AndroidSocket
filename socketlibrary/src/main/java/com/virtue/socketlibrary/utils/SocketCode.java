@@ -1,4 +1,4 @@
-package com.virtue.socketlibrary;
+package com.virtue.socketlibrary.utils;
 
 public interface SocketCode {
 	int SUCCESS = 0; //发送成功（send succeed）

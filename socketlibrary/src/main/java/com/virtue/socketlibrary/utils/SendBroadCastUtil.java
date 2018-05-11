@@ -1,10 +1,9 @@
-package com.virtue.socketlibrary;
+package com.virtue.socketlibrary.utils;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 
-import java.io.Serializable;
+import com.virtue.socketlibrary.type.BroadCastType;
 
 public class SendBroadCastUtil {
 
