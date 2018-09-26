@@ -151,7 +151,6 @@ Other
      ConnectReceiver dataReceiver = new ConnectReceiver();
      registerReceiver(dataReceiver, intentFilter);
 
-     <br>
 
      @Override
           public void onReceive(Context context, Intent intent) {
