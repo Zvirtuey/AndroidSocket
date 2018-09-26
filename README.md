@@ -60,7 +60,7 @@ Case1. Auto Parse ! （自动解析包含服务器主推通知和请求响应两
 #### Broadcast reception is as follows：(广播接收如下)<br>
     @Override
              public void onReceive(Context context, Intent intent) {
-                  if (intent.getAction() == BroadCastType.SERVER_NOTICE) {
+                  if (intent.getAction().equals(BroadCastType.SERVER_NOTICE)) {
                       String dataStr = intent.getStringExtra(BroadCastType.SERVER_NOTICE_DATA);
                       Log.i(TAG, "Data given to me by the server:" + dataStr);
                   }
@@ -142,6 +142,28 @@ Other
      //Socketer.getInstance(getApplicationContext()).setReceiveType(ReceiveType.SEPARATION_SIGN);
      //Socketer.getInstance(getApplicationContext()).setTimeout(15); ...
       Socketer.getInstance(getApplicationContext()).reConnectSever(ip, port);
+
+<br>
+
+#### If you want to listen to the server connection and disconnection status(如过你想监听服务器连接与断开的状态)<br>
+     IntentFilter intentFilter = new IntentFilter();
+     intentFilter.addAction(BroadCastType.NETWORK_CONNECT_STATE);
+     ConnectReceiver dataReceiver = new ConnectReceiver();
+     registerReceiver(dataReceiver, intentFilter);
+
+     <br>
+
+     @Override
+          public void onReceive(Context context, Intent intent) {
+                if (intent.getAction().equals(BroadCastType.SERVER_NOTICE)) {
+                     boolean isConnected = intent.getBooleanExtra(BroadCastType.IS_CONNECTED, false);
+                     if(isConnected){
+                         Log.i(TAG, "socket connected");
+                     }else{
+                         Log.e(TAG, "socket disconnect");
+                     }
+                }
+          }
 
 <br><br>
 

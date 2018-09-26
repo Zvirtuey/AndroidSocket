@@ -7,8 +7,13 @@ import com.virtue.socketlibrary.manager.Socketer;
  */
 
 public interface OnReceiveListener {
+    //socket 连接成功
     void onConnected(Socketer socketer);
+
+    //socket 连接失败
     void onDisconnected(Socketer socketer);
+
+    //socket 数据响应
     void onResponse(String data);
 
 }

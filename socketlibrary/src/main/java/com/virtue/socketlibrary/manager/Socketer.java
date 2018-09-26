@@ -49,7 +49,7 @@ public class Socketer extends Thread {
     private int timeout = 15; //请求超时时长 单位秒（Unit sec）
     private int sendMaxByteLength = 1500; //发送字节数限制 单位字节（Unit byte）
     private boolean isRunning = true; //是否接受服务器数据
-    public boolean isConnected = true; // 是否连接服务器
+    public boolean isConnected = false; // 是否连接服务器
     private String encode = "UTF-8"; //编码
     private String endCharSequence = "\r\n"; //分割结束标识符
     private String endData = ""; //尾部剩余数据
@@ -394,6 +394,7 @@ public class Socketer extends Thread {
             bindServerConnect(ip, port).start();
         }
         Socketer.getInstance(mContext).bindServerConnect(ip, port);
+
     }
 
     /**
@@ -415,7 +416,7 @@ public class Socketer extends Thread {
         }
     }
 
-    private void closeSocketer() {
+    public void closeSocketer() {
         reqIdList.clear();
         mTimeOutMap.clear();
         mListenerMap.clear();

@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.virtue.socketdemo.bean.TestBean;
@@ -24,7 +25,7 @@ import java.util.ArrayList;
 import static android.R.attr.type;
 
 public class MainActivity extends AppCompatActivity {
-
+    private static final String TAG = "MainActivity";
     private TextView tvRequest;
     private TextView tvResponse;
     private Button btSend;
@@ -109,7 +110,10 @@ public class MainActivity extends AppCompatActivity {
 
                         break;
                     case MANUALLY_PARSE:
-                        Socketer.getInstance(MainActivity.this).sendStrData(reDataStr); //request
+                        boolean sendResult = Socketer.getInstance(MainActivity.this).sendStrData(reDataStr);//request
+                        if (!sendResult) {
+                            Toast.makeText(MainActivity.this, "send fail", Toast.LENGTH_SHORT).show();
+                        }
 
                         break;
 
@@ -126,12 +130,12 @@ public class MainActivity extends AppCompatActivity {
         Socketer.getInstance(MainActivity.this).setOnReceiveListener(new OnReceiveListener() {
             @Override
             public void onConnected(Socketer socketer) {
-
+                Log.i(TAG, "服务器连接成功");
             }
 
             @Override
             public void onDisconnected(Socketer socketer) {
-
+                Log.e(TAG, "服务器断开连接");
             }
 
             @Override
@@ -163,8 +167,14 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onFail(int failCode) {
+            public void onFail(final int failCode) {
                 Log.e("Test server data", "callback error：" + failCode);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "返回错误码：" + failCode, Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
     }

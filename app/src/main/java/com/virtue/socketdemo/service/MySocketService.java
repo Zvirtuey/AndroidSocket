@@ -31,8 +31,8 @@ public class MySocketService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Socketer.getInstance(getApplicationContext()).bindServerConnect("123.57.56.201", 20083)
-                .setTimeout(15).setEncode("UTF_8")
+        Socketer.getInstance(getApplicationContext()).bindServerConnect("36.110.84.82", 20083)
+                .setTimeout(10).setEncode("UTF_8")
                 .setReceiveType(ReceiveType.SEPARATION_SIGN)
                 .setEndCharSequence("\r\n")
                 .setMsgLength(1500).start();
@@ -46,7 +46,7 @@ public class MySocketService extends Service {
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction() == BroadCastType.SERVER_NOTICE) {
+            if (intent.getAction().equals(BroadCastType.SERVER_NOTICE)) {
                 String dataStr = intent.getStringExtra(BroadCastType.SERVER_NOTICE_DATA);
                 Log.i(TAG, "Data given to me by the server:" + dataStr);
             }
@@ -58,6 +58,8 @@ public class MySocketService extends Service {
         super.onDestroy();
         if (dataReceiver != null) {
             unregisterReceiver(dataReceiver);
+            Socketer.getInstance(getApplicationContext()).closeConnect();
+            Socketer.getInstance(getApplicationContext()).closeSocketer();
         }
     }
 }
