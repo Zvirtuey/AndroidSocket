@@ -18,7 +18,9 @@ import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -369,8 +371,9 @@ public class Socketer extends Thread {
 
     private void connectSocket() throws IOException {
         endData = "";
-        socket = new Socket(ip, port);
-        socket.setSoTimeout(15 * 1000);
+        socket = new Socket();
+        SocketAddress socketAddress = new InetSocketAddress(ip, port);
+        socket.connect(socketAddress, 5 * 1000);
         socket.setTcpNoDelay(true); // 关闭 Nagle 算法
         socket.setReceiveBufferSize(1024 * 10000);
         outputStream = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), encode));
