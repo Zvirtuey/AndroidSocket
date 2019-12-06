@@ -5,6 +5,6 @@ package com.virtue.socketlibrary.type;
  */
 
 public enum ParseMode {
-    AUTO_PARSE,//自动解析
-    MANUALLY_PARSE //手动解析
+    AUTO_PARSE,//自动解析(Auto Parse)
+    MANUALLY_PARSE //手动解析(Manually Parse)
 }

@@ -65,17 +65,18 @@ public class MainActivity extends AppCompatActivity {
         spMode.setAdapter(arr_adapter);
 
         Gson gson = new Gson();
-        TestBean codeGetModle = new TestBean();
-        codeGetModle.protver = "100";
-        codeGetModle.pkgtype = 1;
-        codeGetModle.command = 15;
-        codeGetModle.seq = 1000;
-        TestBean.Inform in = codeGetModle.body;
+        TestBean codeGetModel = new TestBean();
+        codeGetModel.protver = "100";
+        codeGetModel.pkgtype = 1;
+        codeGetModel.command = 15;
+        codeGetModel.seq = 1000;
+        TestBean.Inform in = codeGetModel.body;
         in.cmd = type;
         in.Phone = "18500000000";
-        final String json = gson.toJson(codeGetModle);
+        final String json = gson.toJson(codeGetModel);
         // bean转字符串并发送
         reDataStr = json + "\r\n";
+        Log.i(TAG, "reDataStr-->" + reDataStr);
         tvRequest.setText(json);
     }
 
@@ -153,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void autoReceiveData() {
+        //Socketer.getInstance(MainActivity.this).reConnectSever("192.168.2.171", 20083);
         Socketer.getInstance(MainActivity.this).sendStrData(reDataStr, "\"seq\":1000", new ResponseListener() {
             @Override
             public void onSuccess(final String data) {

@@ -6,13 +6,13 @@ Add AndroidSocket to your project
 -----
 
 #### Gradle <br>
-     compile 'com.virtue.androidsocket:AndroidSocket:1.0.6'
+     compile 'com.virtue.androidsocket:AndroidSocket:1.0.7'
 
 #### Maven <br>
      <dependency>
        <groupId>com.virtue.androidsocket</groupId>
        <artifactId>AndroidSocket</artifactId>
-       <version>1.0.6</version>
+       <version>1.0.7</version>
        <type>pom</type>
      </dependency>
 

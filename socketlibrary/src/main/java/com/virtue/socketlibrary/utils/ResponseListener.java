@@ -5,6 +5,10 @@ package com.virtue.socketlibrary.utils;
  */
 
 public interface ResponseListener {
+
+    //response data
     void onSuccess(String data);
+
+    //failed code
     void onFail(int failCode);
 }

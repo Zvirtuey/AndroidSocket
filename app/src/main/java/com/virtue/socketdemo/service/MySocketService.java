@@ -31,10 +31,11 @@ public class MySocketService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Socketer.getInstance(getApplicationContext()).bindServerConnect("36.110.84.82", 20083)
+        //Demo in the LAN network, if you want to demo you need to modify your own server!
+        Socketer.getInstance(getApplicationContext()).bindServerConnect("192.168.2.171", 20083)
                 .setTimeout(10).setEncode("UTF_8")
                 .setReceiveType(ReceiveType.SEPARATION_SIGN)
-                .setEndCharSequence("\r\n")
+                .setEndCharSequence("\r\n") //服务器分割消息符
                 .setMsgLength(1500).start();
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BroadCastType.SERVER_NOTICE);
